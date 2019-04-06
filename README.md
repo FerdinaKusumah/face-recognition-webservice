@@ -1,13 +1,21 @@
-# face-recognition-webservice using python sanic
+# Face recognition webservice using python sanic
 
-## Installation dependencies, required python 3
+## Prerequisites
+Needs Python 3.4 +
 
-1. `pip install sanic`
-2. `pip install face_recognition`
-
-
-# This service will display name and face positions from President of Indonesia
-### you can use example image testing to get result, use postman to fast testing
+1. Install python sanic
+```bash
+    $ pip install sanic
+```
+2. Install face_recognition
+```bash
+    $ pip install face_recognition
+```
+3. run
+```bash
+    $ python app.py
+```
+### This service will display name and face positions from president of Indonesia
 
 ## Reference
 1. [Sanic framework](https://github.com/huge-success/sanic)
