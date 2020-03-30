@@ -1,28 +1,40 @@
 #!/usr/bin/env python3
+import os
+import pickle
+from http import HTTPStatus
+
 from sanic import Sanic
 from sanic import response
 from sanic.exceptions import NotFound
-import pickle as cPickle
 
-from handler.services import services
+from handler.routes import services
 
 app = Sanic(__name__)
 app.blueprint(services)
-app.config['model_path'] = './model/train_model.clf'
+
 
 @app.listener('before_server_start')
-async def init(sanic, loop):
-    with open(app.config['model_path'], 'rb') as train_model:
-        knn_classifier = cPickle.load(train_model)
-        app.config['db'] = knn_classifier
+async def init(app, loop):
+    async def load_pickle():
+        _path = os.path.dirname(os.path.abspath(__file__)) + '/model/train_model.clf'
+        with open(_path, 'rb') as f:
+            return pickle.load(f)
+
+    # distance threshold
+    app.distance_threshold = 0.4
+    # load classifier
+    app.train_model = await load_pickle()
+
 
 @app.listener('after_server_stop')
 async def close_connection(app, loop):
     pass
 
+
 @app.exception(NotFound)
 async def ignore_404s(request, exception):
-    return response.json({'status': 500, 'message': 'Route not found'})
+    return response.json({'status': HTTPStatus.NOT_FOUND, 'message': 'Route not found'})
+
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=19999, debug=True, workers=4)
+    app.run(host="0.0.0.0", port=8000, debug=True, workers=4)

@@ -1,22 +1,27 @@
-# Face recognition webservice using python sanic
+# Face recognition webservice using python [sanic](https://github.com/huge-success/sanic)
 
-## Prerequisites
-Needs Python 3.4 +
+## Manual install Prerequisites
+Needs Python 3.5 +
 
-1. Install python sanic
+* Install all dependency
 ```bash
-    $ pip install sanic
+    $ pip install -r requirements.txt
 ```
-2. Install face_recognition
-```bash
-    $ pip install face_recognition
-```
-3. run
+
+* Run application
 ```bash
     $ python app.py
 ```
-### This service will display name and face positions from president of Indonesia
 
-## Reference
-1. [Sanic framework](https://github.com/huge-success/sanic)
-2. [Face recognition](https://github.com/ageitgey/face_recognition)
+### This service will display name and face positions from president of Indonesia until 7th President
+
+Routes:
+    
+    * [GET] - `/api/hello` check if api is live
+    * [POST] - `/api/recognize` to recognize an image and return result as base64 image 
+
+
+
+## References
+* [Sanic framework](https://github.com/huge-success/sanic)
+* [Face recognition](https://github.com/ageitgey/face_recognition)

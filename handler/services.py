@@ -1,78 +1,81 @@
+import base64
+import io
+
 import face_recognition
-import json as JSON
-import math, uuid, re, time, io
-import pickle as cPickle
+from PIL import Image, ImageDraw
 
-from sanic import Sanic, Blueprint, response
-from sklearn import neighbors
 
-from helper import beautify
+class Prediction:
 
-services = Blueprint('services')
+    def __init__(self, train_model, distance_threshold):
+        self.__model = train_model
+        self.__distance_threshold = distance_threshold
 
-# call this api to make sure api is running
-@services.get('/api/hello', strict_slashes=True)
-async def hello(request):
-    return response.json({'status': 200, 'message': 'Hello .. '})
+    @staticmethod
+    def show_prediction_labels_on_image(img_path, predictions, image_extension):
+        pil_image = Image.open(io.BytesIO(img_path)).convert("RGB")
+        draw = ImageDraw.Draw(pil_image)
 
-# function to validate acceptable files
-ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
-def allowed_file(filename):
-    return '.' in filename and \
-           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+        for name, (top, right, bottom, left) in predictions:
+            # Draw a box around the face using the Pillow module
+            draw.rectangle(((left, top), (right, bottom)), outline=(0, 0, 255))
 
-# function to predict unknown image
-# this library use KNN model 
-async def predict(stream_image, knn_clf, distance_threshold=0.6):
+            # There's a bug in Pillow where it blows up with non-UTF-8 text
+            # when using the default bitmap font
+            name = name.encode("UTF-8")
 
-    # Load image file and find face locations
-    X_img = face_recognition.load_image_file(io.BytesIO(stream_image))
-    X_face_locations = face_recognition.face_locations(X_img)
+            # Draw a label with a name below the face
+            text_width, text_height = draw.textsize(name)
+            draw.rectangle(((left, bottom - text_height - 10), (right, bottom)), fill=(0, 0, 255), outline=(0, 0, 255))
+            draw.text((left + 6, bottom - text_height - 5), name, fill=(255, 255, 255, 255))
 
-    # If no faces are found in the image, return an empty result.
-    if len(X_face_locations) == 0:
-        return []
+        # Remove the drawing library from memory as per the Pillow docs
+        del draw
 
-    # Find encodings for faces in the test iamge
-    faces_encodings = face_recognition.face_encodings(X_img, known_face_locations=X_face_locations)
+        # convert pil to base64 encode image
+        buffered = io.BytesIO()
+        pil_image.save(buffered, format="PNG")
+        img_str = base64.b64encode(buffered.getvalue())
 
-    # Use the KNN model to find the best matches for the test face
-    closest_distances = knn_clf.kneighbors(faces_encodings, n_neighbors=1)
-    are_matches = [closest_distances[0][i][0] <= distance_threshold for i in range(len(X_face_locations))]
+        # Display the resulting image
+        return f'data:image/{image_extension};base64,{img_str.decode()}'
 
-    # Predict classes and remove classifications that aren't within the threshold
-    return [(pred, loc) if rec else ("unknown", loc) for pred, loc, rec in zip(knn_clf.predict(faces_encodings), X_face_locations, are_matches)]
+    def predict_image(self, data: bytes, image_extension: str):
+        """Make prediction based on data upload
+        :param image_extension: str
+        :param data: bytes
+        :return:
+        """
+        # get data model from database
+        data_model = self.__model
+        # Load image file and find face locations
+        x_img = face_recognition.load_image_file(io.BytesIO(data))
+        x_face_locations = face_recognition.face_locations(x_img)
 
-# get prediction name based on unknown image
-async def get_prediction_names(predictions):
-    retval = []
-    for name, (top, right, bottom, left) in predictions:
-        retval.append({'name': name, 'face_locations': {'top': top, 'left': left}})
-    
-    return retval
+        # If no faces are found in the image, return an empty result.
+        if len(x_face_locations) == 0:
+            return []
 
-# load pickle model
-async def get_pickle_model(request):
-    return request.app.config['db']
+        # Find encodings for faces in the test image
+        faces_encodings = face_recognition.face_encodings(x_img, known_face_locations=x_face_locations)
 
-# api that handle recognition image
-@services.post('/api/face-recognition/recognize-image', strict_slashes=True)
-async def detect(request):
-    if 'file' not in request.files:
-        return response.json({'status': 500, 'message': 'image is required'})
-    
-    file = request.files.get('file')
-    if file.name == '':
-        return response.json({'status': 500, 'message': 'image is required name'})
-    
-    if not file and not allowed_file(file.name):
-        return response.json({'status': 500, 'message': 'image extension not allowed'})
+        # Use the KNN model to find the best matches for the test face
+        closest_distances = data_model.kneighbors(faces_encodings, n_neighbors=5)
+        are_matches = [closest_distances[0][i][0] <= self.__distance_threshold for i in range(len(x_face_locations))]
 
-    # get file stream
-    file_stream = file.body
-    knn_clf_data = await get_pickle_model(request)
+        # Predict classes and remove classifications that aren't within the threshold
+        results = [(pred, loc) if rec else ("unknown", loc) for pred, loc, rec in
+                   zip(data_model.predict(faces_encodings), x_face_locations, are_matches)]
 
-    # train data from db to Knn
-    predictions = await predict(file_stream, knn_clf_data, distance_threshold=0.6)
-    results = await get_prediction_names(predictions)
-    return response.json({'status': 200, 'data': results})
+        return self.show_prediction_labels_on_image(data, results, image_extension)
+
+
+class Helper:
+    @staticmethod
+    def allowed_file(filename: str) -> bool:
+        """Check if filename is allowed
+        :return:
+        """
+        # function to validate acceptable files
+        ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
+        return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
