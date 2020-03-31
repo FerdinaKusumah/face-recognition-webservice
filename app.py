@@ -6,10 +6,14 @@ from http import HTTPStatus
 from sanic import Sanic
 from sanic import response
 from sanic.exceptions import NotFound
+from sanic_cors import CORS
 
 from handler.routes import services
 
 app = Sanic(__name__)
+CORS(app)
+
+
 app.blueprint(services)
 
 
