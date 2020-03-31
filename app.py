@@ -19,7 +19,7 @@ app.blueprint(services)
 
 @app.listener('before_server_start')
 async def init(app, loop):
-    async def load_pickle():
+    def load_pickle():
         _path = os.path.dirname(os.path.abspath(__file__)) + '/model/train_model.clf'
         with open(_path, 'rb') as f:
             return pickle.load(f)
@@ -27,7 +27,7 @@ async def init(app, loop):
     # distance threshold
     app.distance_threshold = 0.4
     # load classifier
-    app.train_model = await load_pickle()
+    app.train_model = load_pickle()
 
 
 @app.listener('after_server_stop')
@@ -41,4 +41,4 @@ async def ignore_404s(request, exception):
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=True, workers=4)
+    app.run(host="0.0.0.0", port=8000, debug=True, workers=4)
