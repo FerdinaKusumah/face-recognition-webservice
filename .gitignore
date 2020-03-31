@@ -1,1 +1,9 @@
+
+### Intelij IDE ##
+.idea/*
+
+### Mac file system ###
+*.DS_Store
+
+### Pycache
 *__pycache__
