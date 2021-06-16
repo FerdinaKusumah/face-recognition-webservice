@@ -1,7 +1,6 @@
 from http import HTTPStatus
 
 from sanic import Blueprint, response
-
 from handler.services import Prediction, Helper
 
 services = Blueprint('services')

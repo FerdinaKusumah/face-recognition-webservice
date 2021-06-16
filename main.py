@@ -11,10 +11,16 @@ from sanic_cors import CORS
 from handler.routes import services
 
 app = Sanic(__name__)
-CORS(app)
+CORS(app, automatic_options=True)
 
 
 app.blueprint(services)
+
+
+@app.middleware('request')
+async def print_on_request(request):
+    if request.method == 'OPTIONS':
+        return response.json(None)
 
 
 @app.listener('before_server_start')

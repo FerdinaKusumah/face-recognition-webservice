@@ -10,15 +10,30 @@ Needs Python 3.5 +
 
 * Run application
 ```bash
-    $ python app.py
+    $ python main.py
 ```
 
-### This service will display name and face positions from president of Indonesia until 7th President
+### This service will display name and face positions from famous technology founder
 
+## Train process
+* Go to train folder then unzip file train.zip to current dir
+* run  `python3 train.py` to train all images inside train folder then save all training result to folder model in root dir
+    * Note: this may take sometime to wait train all images to finish.
+* Or you can use prebuild model inside folder model instead.
+
+
+# Testing api
 Routes:
-    
+
     * [GET] - `/api/hello` check if api is live
-    * [POST] - `/api/recognize` to recognize an image and return result as base64 image 
+    * [POST] - `/api/recognize` to recognize an image and return result as base64 image
+
+
+# Result
+
+[Image 1](train/test/example_1.png)
+
+[Image 2](train/test/example_2.png)
 
 
 
