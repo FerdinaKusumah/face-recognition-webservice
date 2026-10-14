@@ -1,5 +1,12 @@
 # Face recognition webservice using python [sanic](https://github.com/huge-success/sanic)
 
+> **⚠️ Archived: this project is no longer maintained.**
+>
+> It was written as an example in 2018 and its dependencies are pinned to old versions: Python 3.8 (end of life since
+> October 2024), Pillow 9.0.1 (newer releases contain security fixes) and Sanic 21.12. Don't deploy it as it is.
+> For new projects, look at maintained face recognition libraries such as
+> [DeepFace](https://github.com/serengil/deepface) or [InsightFace](https://github.com/deepinsight/insightface).
+
 ## Manual install Prerequisites
 Needs Python 3.5 +
 
